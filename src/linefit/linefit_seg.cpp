@@ -43,7 +43,7 @@ void LinefitGroundSeg::setParameters(const LinefitSegParams& linefitseg_params )
   params_ = linefitseg_params;
 }
 
-void LinefitGroundSeg::segmentGround(const pcl::PointCloud<PointXYZIR>::ConstPtr &input_cloud,
+void LinefitGroundSeg::segmentGround(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr &input_cloud,
                                      pcl::PointCloud<pcl::PointXYZI> &out_groundless_cloud,
                                      pcl::PointCloud<pcl::PointXYZI> &out_ground_cloud) {
   pcl::PointCloud<pcl::PointXYZ> xyz_cloud;

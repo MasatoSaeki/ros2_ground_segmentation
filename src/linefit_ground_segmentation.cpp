@@ -189,7 +189,7 @@ void LinefitGroundSegmentation::CloudCallback(const sensor_msgs::msg::PointCloud
     sensor_msgs::msg::PointCloud2 cloud_result;
 
     // convert ros to pcl
-    pcl::PointCloud<PointXYZIR>::Ptr raw_pointcloud_ptr(new pcl::PointCloud<PointXYZIR>);
+    pcl::PointCloud<pcl::PointXYZI>::Ptr raw_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);
     pcl::fromROSMsg(*transformed_cloud_ptr, *raw_pointcloud_ptr);
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr ground_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZI>);

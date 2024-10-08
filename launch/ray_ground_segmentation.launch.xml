@@ -1,10 +1,8 @@
 <?xml version="1.0"?>
 <launch>
     <set_parameter name="use_sim_time" value="true" />
-    <arg name="input/topic" default="/points_raw" description="Input pointcloud"/>
-    <arg name="output/topic" default="/points_processed" description="Output pointcloud"/>
 
-    <arg name="sensor_height" default="0.0"/>
+    <arg name="sensor_height" default="0.00"/>
     <arg name="output_frame" default="base_link"/>
 
     <arg name="general_max_slope" default="10.0"/>
@@ -12,7 +10,7 @@
     <arg name="radial_divider_angle" default="0.1"/>
     <arg name="concentric_divider_distance" default="0.01"/>
     <arg name="min_height_threshold" default="0.1"/>
-    <arg name="clipping_height" default="2.0"/>
+    <arg name="clipping_height" default="3.2"/>
     <arg name="pointcloud_min_z" default="-0.2"/>
     <arg name="min_point_distance" default="0.5"/>
     <arg name="reclass_distance_threshold" default="0.2"/>
@@ -22,21 +20,31 @@
     <arg name="min_intensity" default="25"/>
     <arg name="max_intensity_distance" default="20.0"/>
 
-    <node
-        pkg="tf2_ros"
-        exec="static_transform_publisher"
-        name="static_tf_base_link_pandar_xt_center"
-        args="0.0 0.0 0.5 1.5714 0.01 0.005 base_link pandar_xt32_front_center"
-    />
-
     <group>
-        <node_container pkg="rclcpp_components" exec="component_container_mt" name="pointcloud_container" namespace="/">
+        <node_container pkg="rclcpp_components" exec="component_container_mt" name="ros2_ground_segmentation" namespace="/">
+            <composable_node pkg="pointcloud_preprocessor"
+                            plugin="pointcloud_preprocessor::CropBoxFilterComponent"
+                            name="crop_box_filter"
+                            namespace="">
+                <remap from="input" to="/sensing/lidar/concatenated/pointcloud" />
+                <remap from="output" to="/new_gs/range_cropped/pointcloud" />
+                <param name="input_frame" value="base_link"/>
+                <param name="output_frame" value="base_link"/>
+                <param name="min_x" value="-70.0"/>
+                <param name="max_x" value="100.0"/>
+                <param name="min_y" value="-75.0"/>
+                <param name="max_y" value="75.0"/>
+                <param name="negative" value="false"/>
+                <param name="max_z" value="6.26"/> <!-- max_height_offset(3.06) + margin_max_z(3.2) -->
+                <param name="min_z" value="-2.5"/> <!-- min_height_offset(0.0) + margin_min_z(-2.5) -->
+                <extra_arg name="use_intra_process_comms" value="false" />
+            </composable_node>
             <composable_node pkg="ros2_ground_segmentation"
                              plugin="RayGroundSegmentation"
                              name="ray_ground_filter_node"
                              namespace="">
-                <remap from="input/topic" to="$(var input/topic)" />
-                <remap from="output/topic" to="points_processed" />
+                <remap from="input/topic" to="/new_gs/range_cropped/pointcloud" />
+                <remap from="output/topic" to="/new_gs/points_processed" />
 
                 <param name="sensor_height" value="$(var sensor_height)"/>
                 <param name="output_frame" value="$(var output_frame)"/>
@@ -54,28 +62,9 @@
                 <param name="min_intensity" value="$(var min_intensity)"/>
                 <param name="max_intensity_distance" value="$(var max_intensity_distance)"/>
 
-                <extra_arg name="use_intra_process_comms" value="true" />
-            </composable_node>
-
-            <composable_node pkg="euclidean_cluster"
-                             plugin="euclidean_cluster::VoxelGridBasedEuclideanClusterNode"
-                             name="voxel_grid_based_euclidean_cluster_node"
-                             namespace="">
-                <remap from="input" to="points_processed" />
-                <remap from="output" to="euclidean_clustered/cluster" />
-                <param from="$(find-pkg-share euclidean_cluster)/config/voxel_grid_based_euclidean_cluster.param.yaml" />
-                <extra_arg name="use_intra_process_comms" value="true" />
+                <extra_arg name="use_intra_process_comms" value="false" />
             </composable_node>
         </node_container>
     </group>
-
-    <node pkg="rviz2" exec="rviz2" />
-    <node pkg="rqt_gui" exec="rqt_gui" />
-
-<!--    <include file="$(find-pkg-share tunable_static_tf_broadcaster)/launch/sample.launch.xml">-->
-<!--        <arg name="child_frame" value="pandar_xt32_front_center" />-->
-<!--        <arg name="parent_frame" value="base_link" />-->
-<!--    </include>-->
-
 
 </launch>
